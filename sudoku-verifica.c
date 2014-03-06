@@ -11,10 +11,13 @@ void * conferelinha( void * arg)
       0
     };
   for (i = 0; i < 9; i++)
-    existe[tabuleiro[l][i]-1]++;
+    if (existe[tabuleiro[l][i]-1]++);
   for (i = 0; i < 9; i++)
-    if (existe[i] != 1)
-      return (void *) 1;
+    if (existe[i] > 1)
+      {
+	printf ("A linha %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
+	return (void *) 1;
+      }
   return (void *) 0;
 }
 
@@ -28,8 +31,11 @@ void * conferecol( void * arg)
   for (i = 0; i < 9; i++)
     existe[tabuleiro[i][l]-1]++;
   for (i = 0; i < 9; i++)
-    if (existe[i] != 1)
-      return (void *) 1;
+    if (existe[i] > 1)
+      {
+	printf ("A coluna %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
+	return (void *) 1;
+      }
   return (void *) 0;
 }
 
@@ -43,8 +49,11 @@ void * conferequad( void * arg)
   for (i = 0; i < 9; i++)
     existe[tabuleiro[(l/3)*3+i/3][i%3+(l%3)*3]-1]++;
   for (i = 0; i < 9; i++)
-    if (existe[i] != 1)
-      return (void *) 1;
+    if (existe[i] > 1)
+      {
+	printf ("O quadrado %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
+	return (void *) 1;
+      }
   return (void *) 0;
 }
 
@@ -66,24 +75,7 @@ int main( void)
     }
 
   for (i = 0; i < 27; i++)
-    {
-      pthread_join(threads[i], &ret);
-      if ((int) ret)
-	{
-	  printf ("fail\n");
-	  return 0;
-	}
-    }
-  
-  printf ("success\n");
-  
-
-  /* for (i = 0; i < 9; i++) */
-  /*   { */
-  /*     for (j = 0; j < 9; j++) */
-  /* 	printf ("%d ", tabuleiro[i][j]); */
-  /*     putchar('\n'); */
-  /*   } */
+    pthread_join(threads[i], NULL);
   
   return 0;
 }
