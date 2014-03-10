@@ -1,8 +1,12 @@
-CFLAGS= -g -pthread
+CFLAGS= -g -Og -pthread -Wall -pedantic
 
-BINS= sudoku-verifica
+BINS= sudoku-verifica sudoku-dicas sudoku-resolve
 
 all: $(BINS)
+
+sudoku-dicas: dicas.o sudoku.o
+
+sudoku-resolve: dicas.o sudoku.o
 
 .PHONY: clean
 
