@@ -3,7 +3,7 @@
 
 int tabuleiro[9][9];
 
-void * conferelinha( void * arg)
+void * conferelin( void * arg)
 {
   int l = (int) arg, i;
   char existe[9] = 
@@ -11,14 +11,12 @@ void * conferelinha( void * arg)
       0
     };
   for (i = 0; i < 9; i++)
-    if (existe[tabuleiro[l][i]-1]++);
-  for (i = 0; i < 9; i++)
-    if (existe[i] > 1)
+    if (existe[tabuleiro[l][i]-1]++)
       {
-	printf ("A linha %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
-	return (void *) 1;
+	printf ("A linha %d contém duas ocorrências do número %d.\n", l+1, tabuleiro[l][i]);
+	break;
       }
-  return (void *) 0;
+  return NULL;
 }
 
 void * conferecol( void * arg)
@@ -29,17 +27,15 @@ void * conferecol( void * arg)
       0
     };
   for (i = 0; i < 9; i++)
-    existe[tabuleiro[i][l]-1]++;
-  for (i = 0; i < 9; i++)
-    if (existe[i] > 1)
+   if (existe[tabuleiro[i][l]-1]++)
       {
-	printf ("A coluna %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
-	return (void *) 1;
+	printf ("A coluna %d contém duas ocorrências do número %d.\n", l+1, tabuleiro[i][l]);
+	break;
       }
-  return (void *) 0;
+  return NULL;
 }
 
-void * conferequad( void * arg)
+void * conferequa( void * arg)
 {
   int l = (int) arg, i;
   char existe[9] = 
@@ -47,35 +43,32 @@ void * conferequad( void * arg)
       0
     };
   for (i = 0; i < 9; i++)
-    existe[tabuleiro[(l/3)*3+i/3][i%3+(l%3)*3]-1]++;
-  for (i = 0; i < 9; i++)
-    if (existe[i] > 1)
+    if(existe[tabuleiro[(l/3)*3+i/3][i%3+(l%3)*3]-1]++)
       {
-	printf ("O quadrado %d contém %d ocorrências do número %d.\n", l+1, existe[i], i+1);
-	return (void *) 1;
+	printf ("O quadrado %d contém duas ocorrências do número %d.\n", l+1, tabuleiro[(l/3)*3+i/3][i%3+(l%3)*3]);
+	break;
       }
-  return (void *) 0;
+  return NULL;
 }
-
 
 int main( void)
 {
   int i, j;
-  void * ret;
-  pthread_t threads[27];
+  pthread_t threads[3][9];
   for (i = 0; i < 9; i++)
     for (j = 0; j < 9; j++)
       scanf ("%d",tabuleiro[i]+j);
 
   for (i = 0; i < 9; i++)
     {
-      pthread_create(threads+i, NULL, conferecol, (void *) i);
-      pthread_create(threads+i+9, NULL, conferelinha, (void *) i);
-      pthread_create(threads+i+18, NULL, conferequad, (void *) i);
+      pthread_create(&threads[0][i], NULL, conferecol, (void *) i);
+      pthread_create(&threads[1][i], NULL, conferelin, (void *) i);
+      pthread_create(&threads[2][i], NULL, conferequa, (void *) i);
     }
 
-  for (i = 0; i < 27; i++)
-    pthread_join(threads[i], NULL);
+  for (i = 0; i < 3; i++)
+    for (j = 0; j < 9; j++)
+      pthread_join(threads[i][j], NULL);
   
   return 0;
 }
