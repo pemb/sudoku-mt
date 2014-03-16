@@ -37,15 +37,30 @@ char *** letabuleiro(void)
 	scanf (" %c", &read);
 	  if (read > '0' && read <= '9')
 	    for (k = 0; k < 9; k++)
-	      if (k != read - '1')
-		tabuleiro[i][j][k] = 0;
+	      tabuleiro[i][j][k] = k == (read - '1');
       }
+  return tabuleiro;
+}
+
+char *** letabuleiro_202(void)
+{
+  char *** tabuleiro = copiatabuleiro(NULL);
+  int n, i, j, k, d;
+  scanf ("%d", &n);
+  while (n--)
+    {
+      scanf ("%d %d %d", &i, &j, &d);
+      for (k = 0; k < 9; k++)
+	tabuleiro[i-1][j-1][k] = k == (d - 1);
+    }
   return tabuleiro;
 }
 
 
 void freetabuleiro(char *** tab)
 {
+  if (!tab)
+    return;
   free(tab[0][0]);
   free(tab[0]);
   free(tab);
@@ -74,10 +89,10 @@ void printtabuleiro(char *** tabuleiro)
 	    {
 	      putchar('(');
 	      if (sum == 0)
-		putchar('N');
+	    	putchar('N');
 	      for (k = 0; k < 9; k++)
-		if (tabuleiro[i][j][k])
-		  putchar ('1'+k);
+	    	if (tabuleiro[i][j][k])
+	    	  putchar ('1'+k);
 	      printf (") ");
 	    }
 	}
