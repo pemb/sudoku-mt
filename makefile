@@ -1,4 +1,4 @@
-CFLAGS= -g -O0 -pthread -Wall -pedantic
+CFLAGS= -g -Og -pthread -Wall -pedantic
 
 BINS= sudoku-verifica sudoku-dicas sudoku-resolve
 

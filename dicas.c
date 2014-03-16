@@ -1,9 +1,9 @@
 #include "dicas.h"
 
-void * elimina_linha (void * _args)
+void *elimina_linha(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
@@ -29,10 +29,10 @@ void * elimina_linha (void * _args)
   return (void *) flag;
 }
 
-void * elimina_coluna (void * _args)
+void *elimina_coluna(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
@@ -58,16 +58,19 @@ void * elimina_coluna (void * _args)
   return (void *) flag;
 }
 
-void * elimina_quadrado (void * _args)
+void *elimina_quadrado(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
       for (j = 0; j < 9; j++)
 	{
-	  if (args->tabuleiro[(args->slice/3)*3+i/3][i%3+(args->slice%3)*3][j])
+	  if (args->
+	      tabuleiro[(args->slice / 3) * 3 + i / 3][i % 3 +
+						       (args->slice % 3) *
+						       3][j])
 	    {
 	      digit = j;
 	      sum++;
@@ -79,18 +82,27 @@ void * elimina_quadrado (void * _args)
 	    {
 	      if (j == i)
 		continue;
-	      flag = flag || args->tabuleiro[(args->slice/3)*3+j/3][j%3+(args->slice%3)*3][digit];
-	      args->tabuleiro[(args->slice/3)*3+j/3][j%3+(args->slice%3)*3][digit] = 0;
+	      flag = flag
+		  || args->tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
+								    (args->
+								     slice
+								     % 3) *
+								    3]
+		  [digit];
+	      args->tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
+							     (args->slice %
+							      3) *
+							     3][digit] = 0;
 	    }
 	}
     }
   return (void *) flag;
 }
 
-void * single_linha (void * _args)
+void *single_linha(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
@@ -114,11 +126,11 @@ void * single_linha (void * _args)
     }
   return (void *) flag;
 }
-	
-void * single_coluna (void * _args)
+
+void *single_coluna(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
@@ -144,16 +156,19 @@ void * single_coluna (void * _args)
   return (void *) flag;
 }
 
-void * single_quadrado (void * _args)
+void *single_quadrado(void *_args)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag = 0, sum, digit;
+  Args *args = (Args *) _args;
+  int i, j, flag = 0, sum, digit;
   for (i = 0; i < 9; i++)
     {
       sum = 0;
       for (j = 0; j < 9; j++)
 	{
-	  if (args->tabuleiro[(args->slice/3)*3+j/3][j%3+(args->slice%3)*3][i])
+	  if (args->
+	      tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
+						       (args->slice % 3) *
+						       3][i])
 	    {
 	      digit = j;
 	      sum++;
@@ -165,8 +180,13 @@ void * single_quadrado (void * _args)
 	    {
 	      if (j == i)
 		continue;
-	      flag = flag || args->tabuleiro[(args->slice/3)*3+digit/3][digit%3+(args->slice%3)*3][j];
-	      args->tabuleiro[(args->slice/3)*3+digit/3][digit%3+(args->slice%3)*3][j] = 0;
+	      flag = flag
+		  || args->tabuleiro[(args->slice / 3) * 3 +
+				     digit / 3][digit % 3 +
+						(args->slice % 3) * 3][j];
+	      args->tabuleiro[(args->slice / 3) * 3 +
+			      digit / 3][digit % 3 +
+					 (args->slice % 3) * 3][j] = 0;
 	    }
 	}
     }

@@ -1,10 +1,18 @@
-char *** copiatabuleiro(char ***);
+#ifndef SUDOKU_H
+#define SUDOKU_H
 
-char *** letabuleiro(void);
+#define GRID_SIZE 9
+#define SUBGRID_SIZE 3
+#define NUMBERS 9
 
-char *** letabuleiro_202(void);
+char ***copiatabuleiro(char ***);
+
+char ***letabuleiro(void);
+
+char ***letabuleiro_202(void);
 
 void freetabuleiro(char ***);
 
 void printtabuleiro(char ***);
 
+#endif

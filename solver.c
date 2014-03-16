@@ -1,219 +1,118 @@
 #include "solver.h"
+#include "sudoku.h"
 #include <pthread.h>
 #include <semaphore.h>
 
-void * solver_loop(void * _args)
+#define STRATEGIES 6
+
+char * remove_row(char *** g, int slice, int index, int pos)
 {
-  Args * args = (Args *) _args;
-  int i,j, flag, sum, match, slice;
+  return g[slice][index]+pos;
+}
+
+char * remove_column(char *** g, int slice, int index, int pos)
+{
+  return g[index][slice]+pos;
+}
+
+char * remove_subgrid(char *** g, int slice, int index, int pos)
+{
+  return 
+    g
+    [(slice / SUBGRID_SIZE) * SUBGRID_SIZE + index / SUBGRID_SIZE]
+    [(slice % SUBGRID_SIZE) * SUBGRID_SIZE + index % SUBGRID_SIZE]
+    +pos;
+}
+
+char * single_row(char *** g, int slice, int index, int pos)
+{
+  return g[slice][pos]+index;
+}
+
+char * single_column(char *** g, int slice, int index, int pos)
+{
+  return g[pos][slice]+index;
+}
+
+char * single_subgrid(char *** g, int slice, int index, int pos)
+{
+  return g
+    [(slice / SUBGRID_SIZE) * SUBGRID_SIZE + pos / SUBGRID_SIZE]
+    [(slice % SUBGRID_SIZE) * SUBGRID_SIZE + pos % SUBGRID_SIZE]
+    +index;
+}
+
+char * (*getpos[STRATEGIES]) (char ***, int, int, int) = 
+{
+  remove_row, remove_column, remove_subgrid, single_row, single_column, single_subgrid
+};
+
+void *solver_loop(void *_args)
+{
+  Args *args = (Args *) _args;
+  int h, i, j, flag, sum, match, slice;
 
   pthread_mutex_lock(&args->mutex);
   slice = args->slice++;
   pthread_mutex_unlock(&args->mutex);
 
-  do
+  
+  while (1)
     {
       flag = 0;
-      for (i = 0; i < 9; i++)
+      for (h = 0; h < STRATEGIES; h++)
 	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
+	  for (i = 0; i < GRID_SIZE; i++)
 	    {
-	      if (args->tabuleiro[slice][i][j])
+	      sum = 0;
+	      for (j = 0; j < GRID_SIZE; j++)
 		{
-		  match = j;
-		  sum++;
+		  if (*getpos[h](args->tabuleiro, slice, i, j))
+		    {
+		      match = j;
+		      sum++;
+		    }
 		}
-	    }
-	  if (sum != 1)
-	    continue;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (j == i)
+	      if (sum != 1)
 		continue;
-	      flag = flag || args->tabuleiro[slice][j][match];
-	      args->tabuleiro[slice][j][match] = 0;
-	    }
-
-	}
-
-      for (i = 0; i < 9; i++)
-	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (args->tabuleiro[slice][j][i])
-		{
-		  match = j;
-		  sum++;
-		}
-	    }
-	  if (sum != 1)
-	    continue;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (j == i)
-		continue;
-	      flag = flag || args->tabuleiro[slice][match][j];
-	      args->tabuleiro[slice][match][j] = 0;
-	    }
-	}
-
-      pthread_mutex_lock(&args->mutex);
-      if (++(args->count) == 9)
-	sem_post(args->sem);      
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem);
-      sem_post(args->sem);
-      
-      pthread_mutex_lock(&args->mutex);
-      flag = args->flag;      
-      if(!--(args->count))
-	{
-	  sem_post(args->sem+1);
-	}
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem+1);
-      sem_post(args->sem+1);
-  
-      for (i = 0; i < 9; i++)
-	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (args->tabuleiro[i][slice][j])
-		{
-		  match = j;
-		  sum++;
-		}
-	    }
-	  if (sum == 1)
-	    {
-	      for (j = 0; j < 9; j++)
+	      for (j = 0; j < NUMBERS; j++)
 		{
 		  if (j == i)
 		    continue;
-		  flag = flag || args->tabuleiro[j][slice][match];
-		  args->tabuleiro[j][slice][match] = 0;
+		  flag = flag || *getpos[h](args->tabuleiro,slice,j,match);
+		  *getpos[h](args->tabuleiro,slice,j,match) = 0;
 		}
-	    }
-	}
 
-	
-      for (i = 0; i < 9; i++)
-	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (args->tabuleiro[j][slice][i])
-		{
-		  match = j;
-		  sum++;
-		}
-	    }
-	  if (sum == 1)
-	    {
-	      for (j = 0; j < 9; j++)
-		{
-		  if (j == i)
-		    continue;
-		  flag = flag || args->tabuleiro[match][slice][j];
-		  args->tabuleiro[match][slice][j] = 0;
-		}
 	    }
 	}
 
       pthread_mutex_lock(&args->mutex);
-      if (++(args->count) == 9)
-	sem_post(args->sem);      
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem);
-      sem_post(args->sem);
-      
-      pthread_mutex_lock(&args->mutex);
-      flag = args->flag;      
-      if(!--(args->count))
-	{
-	  sem_post(args->sem+1);
-	}
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem+1);
-      sem_post(args->sem+1);
-
-
-      for (i = 0; i < 9; i++)
-	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (args->tabuleiro[(slice/3)*3+i/3][i%3+(slice%3)*3][j])
-		{
-		  match = j;
-		  sum++;
-		}
-	    }
-	  if (sum == 1)
-	    {
-	      for (j = 0; j < 9; j++)
-		{
-		  if (j == i)
-		    continue;
-		  flag = flag || args->tabuleiro[(slice/3)*3+j/3][j%3+(slice%3)*3][match];
-		  args->tabuleiro[(slice/3)*3+j/3][j%3+(slice%3)*3][match] = 0;
-		}
-	    }
-	}
-
-      for (i = 0; i < 9; i++)
-	{
-	  sum = 0;
-	  for (j = 0; j < 9; j++)
-	    {
-	      if (args->tabuleiro[(slice/3)*3+j/3][j%3+(slice%3)*3][i])
-		{
-		  match = j;
-		  sum++;
-		}
-	    }
-	  if (sum == 1)
-	    {
-	      for (j = 0; j < 9; j++)
-		{
-		  if (j == i)
-		    continue;
-		  flag = flag || args->tabuleiro[(slice/3)*3+match/3][match%3+(slice%3)*3][j];
-		  args->tabuleiro[(slice/3)*3+match/3][match%3+(slice%3)*3][j] = 0;
-		}
-	    }
-	}
-
-      pthread_mutex_lock(&args->mutex);
-      if (++(args->count) == 9)
-	sem_post(args->sem);      
+      if (++(args->count) == GRID_SIZE)
+      	{
+      	  sem_wait(args->sem + 1);
+      	  sem_post(args->sem);
+      	}
       args->flag = flag || args->flag;
       pthread_mutex_unlock(&args->mutex);
 
       sem_wait(args->sem);
       sem_post(args->sem);
-      
+
+      if (!args->flag)
+      	return NULL;
+
       pthread_mutex_lock(&args->mutex);
-      flag = args->flag;      
-      if(!--(args->count))
-	{
-	  args->flag = 0;
-	  sem_post(args->sem+1);
-	}
+      if (!--(args->count))
+      	{
+      	  args->flag = 0;
+      	  sem_wait(args->sem);
+      	  sem_post(args->sem + 1);
+      	}
       pthread_mutex_unlock(&args->mutex);
 
-      sem_wait(args->sem+1);
-      sem_post(args->sem+1);
+      sem_wait(args->sem + 1);
+      sem_post(args->sem + 1);
     }
-  while (flag);
-  
 
   return NULL;
 }
