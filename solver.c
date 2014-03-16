@@ -5,17 +5,17 @@
 
 #define STRATEGIES 6
 
-char * remove_row(char *** g, int slice, int index, int pos)
+inline char * remove_row(char *** g, int slice, int index, int pos)
 {
   return g[slice][index]+pos;
 }
 
-char * remove_column(char *** g, int slice, int index, int pos)
+inline char * remove_column(char *** g, int slice, int index, int pos)
 {
   return g[index][slice]+pos;
 }
 
-char * remove_subgrid(char *** g, int slice, int index, int pos)
+inline char * remove_subgrid(char *** g, int slice, int index, int pos)
 {
   return 
     g
@@ -24,17 +24,17 @@ char * remove_subgrid(char *** g, int slice, int index, int pos)
     +pos;
 }
 
-char * single_row(char *** g, int slice, int index, int pos)
+inline char * single_row(char *** g, int slice, int index, int pos)
 {
   return g[slice][pos]+index;
 }
 
-char * single_column(char *** g, int slice, int index, int pos)
+inline char * single_column(char *** g, int slice, int index, int pos)
 {
   return g[pos][slice]+index;
 }
 
-char * single_subgrid(char *** g, int slice, int index, int pos)
+inline char * single_subgrid(char *** g, int slice, int index, int pos)
 {
   return g
     [(slice / SUBGRID_SIZE) * SUBGRID_SIZE + pos / SUBGRID_SIZE]
@@ -42,7 +42,7 @@ char * single_subgrid(char *** g, int slice, int index, int pos)
     +index;
 }
 
-char * (*getpos[STRATEGIES]) (char ***, int, int, int) = 
+inline char * (*getpos[STRATEGIES]) (char ***, int, int, int) = 
 {
   remove_row, remove_column, remove_subgrid, single_row, single_column, single_subgrid
 };
@@ -55,10 +55,22 @@ void *solver_loop(void *_args)
   pthread_mutex_lock(&args->mutex);
   slice = args->slice++;
   pthread_mutex_unlock(&args->mutex);
-
   
   while (1)
     {
+      
+      pthread_mutex_lock(&args->mutex);
+      if (++(args->count) == GRID_SIZE)
+	{
+	  sem_wait(args->sem + 1);
+	  sem_post(args->sem);
+	}
+
+      pthread_mutex_unlock(&args->mutex);
+
+      sem_wait(args->sem);
+      sem_post(args->sem);
+
       flag = 0;
       for (h = 0; h < STRATEGIES; h++)
 	{
@@ -86,24 +98,18 @@ void *solver_loop(void *_args)
 	    }
 	}
 
+      /* if (!args->flag) */
+      /* 	return NULL; */
+
       pthread_mutex_lock(&args->mutex);
-      if (++(args->count) == GRID_SIZE)
-      	{
-      	  sem_wait(args->sem + 1);
-      	  sem_post(args->sem);
-      	}
       args->flag = flag || args->flag;
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem);
-      sem_post(args->sem);
-
-      if (!args->flag)
-      	return NULL;
-
-      pthread_mutex_lock(&args->mutex);
       if (!--(args->count))
       	{
+	  if (!args->flag)
+	    {
+	      sem_post(args->sem+2);
+	      sem_wait(args->sem+1);
+	    }
       	  args->flag = 0;
       	  sem_wait(args->sem);
       	  sem_post(args->sem + 1);

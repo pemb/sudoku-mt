@@ -7,7 +7,7 @@
 struct _Args {
   char ***tabuleiro, flag, slice, count;
   pthread_mutex_t mutex;
-  sem_t sem[2];
+  sem_t sem[3];
 };
 
 typedef struct _Args Args;
