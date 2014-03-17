@@ -1,5 +1,7 @@
 #include "dicas.h"
 
+/* funções eliminam probabilidades */
+
 void *elimina_linha(void *_args)
 {
   Args *args = (Args *) _args;
@@ -67,10 +69,9 @@ void *elimina_quadrado(void *_args)
       sum = 0;
       for (j = 0; j < 9; j++)
 	{
-	  if (args->
-	      tabuleiro[(args->slice / 3) * 3 + i / 3][i % 3 +
-						       (args->slice % 3) *
-						       3][j])
+	  if (args->tabuleiro[(args->slice / 3) * 3 + i / 3][i % 3 +
+							     (args->slice %
+							      3) * 3][j])
 	    {
 	      digit = j;
 	      sum++;
@@ -84,8 +85,7 @@ void *elimina_quadrado(void *_args)
 		continue;
 	      flag = flag
 		  || args->tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
-								    (args->
-								     slice
+								    (args->slice
 								     % 3) *
 								    3]
 		  [digit];
@@ -165,10 +165,9 @@ void *single_quadrado(void *_args)
       sum = 0;
       for (j = 0; j < 9; j++)
 	{
-	  if (args->
-	      tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
-						       (args->slice % 3) *
-						       3][i])
+	  if (args->tabuleiro[(args->slice / 3) * 3 + j / 3][j % 3 +
+							     (args->slice %
+							      3) * 3][i])
 	    {
 	      digit = j;
 	      sum++;

@@ -24,11 +24,11 @@ void *resolve_sudoku(void *arg)
 
   /* libera threads para trabalharem e espera fim da eliminação */
 
-  sem_post(args.sem+1);
-  sem_wait(args.sem+2);
-  
+  sem_post(args.sem + 1);
+  sem_wait(args.sem + 2);
+
   /* para cada célula do grid */
-  
+
   for (i = 0; i < GRID_SIZE; i++)
     {
       for (j = 0; j < GRID_SIZE; j++)
@@ -45,7 +45,7 @@ void *resolve_sudoku(void *arg)
 	      freetabuleiro(tabuleiro);
 	      return NULL;
 	    }
-	  
+
 	  /* se há mais do que 1 (pega a maior no fim das contas), preparar
 	     para entrar no backtracking */
 
@@ -69,7 +69,7 @@ void *resolve_sudoku(void *arg)
 	}
     }
 
-  /* se não houve mais de uma possibilidade*/
+  /* se não houve mais de uma possibilidade */
   if (!tries)
     return tabuleiro;
 
@@ -87,13 +87,8 @@ void *resolve_sudoku(void *arg)
       /* se achou solução, já sai */
       if (tmp)
 	break;
-	/* { */
-	/*   freetabuleiro(tabuleiro); */
-	/*   free(tries); */
-	/*   return tmp; */
-	/* } */
     }
-
+  /* libera memória e retorna resultado */
   freetabuleiro(tabuleiro);
   free(tries);
   return tmp;
@@ -102,30 +97,38 @@ void *resolve_sudoku(void *arg)
 int main(void)
 {
   int i;
+  /* lê tabuleiro */
   char ***tabuleiro = letabuleiro();
 
+  /* inicializa primitivas de sincronização */
   pthread_mutex_init(&args.mutex, NULL);
   for (i = 0; i < 3; i++)
-    sem_init(args.sem+i, 0, 0);
-  
+    sem_init(args.sem + i, 0, 0);
+
   args.flag = args.count = args.slice = 0;
 
+  /* abre threads */
   for (i = 0; i < GRID_SIZE; i++)
     pthread_create(threads + i, NULL, solver_loop, (void *) &args);
 
+  /* chama função que resolve */
   tabuleiro = resolve_sudoku(tabuleiro);
 
   /* while (i--) */
   /*   pthread_join(threads[i], NULL); */
 
+  /* destrói primitivas de sincronização */
   pthread_mutex_destroy(&args.mutex);
   for (i = 0; i < 2; i++)
     sem_destroy(args.sem + i);
 
+  /*imprime resultado */
   if (!tabuleiro)
     printf("no solution\n");
   else
     printtabuleiro(tabuleiro);
+
+  /* libera memória */
   freetabuleiro(tabuleiro);
   return 0;
 }
