@@ -1,0 +1,18 @@
+sudoku-verifica: recebe na entrada padrão um grid completo e imprime inconsistências que forem encontradas na saída padrão. Caso seja um tabuleiro válido, nada será impresso.
+
+sudoku-dicas: recebe na entrada padrão um grid e imprime dicas mostrando que valores são possíveis em cada posição, na saída padrão.
+
+sudoku-resolve: recebe na entrada padrão um grid e imprime uma solução, caso haja, ou "no solution" no caso contrário, na saída padrão.
+
+Formato da entrada: apenas os símbolos da entrada (números de 1 a 9), separados ou não por whitespace, ou qualquer outro caractere ASCII não-whitespace para denotar posição indefinida. Segue exemplo de entrada válida:
+
+8 X X X X X X X X
+X X 3 6 X X X X X
+X 7 X X 9 X 2 X X
+X 5 X X X 7 X X X
+X X X X 4 5 7 X X
+X X X 1 X X X 3 X
+X X 1 X X X X 6 8
+X X 8 5 X X X 1 X
+X 9 X X X X 4 X X
+
