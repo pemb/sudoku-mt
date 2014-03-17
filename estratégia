@@ -1,0 +1,30 @@
+sudoku-verifica:
+
+A estratégia foi bem simples, apenas abrir 9 threads, cada uma conferindo uma
+linha, coluna e subgrid, e as próprias threads imprimem os erros que
+encontrarem.
+
+sudoku-verifica:
+
+A estratégia novamente foi feita usando 9 threads. Dessa vez as threads
+percorrem uma vez cada linha, coluna e subgrid do grid, desmarcando as
+impossibilidades.
+
+sudoku-resolve:
+
+A estratégia adotada foi um pouco mais complexa. No início tentamos usar threads
+pra tudo, porém no caso de sudokus muito difíceis, como o arto-inkala, o
+programa ia para milhares de threads, com consumo de dezenas de GB de memória
+virtual, e portanto essa estratégia logo foi abandonada.
+
+Então o que foi feito no fim das contas: 9 threads processando em loop as
+possibilidades até que ninguém conseguisse progredir. Nesse ponto o programa
+copia o tabuleiro, chuta um dos valores possíveis para uma célula e continua a
+partir daí, técnica conhecida como backtracking. Se tomou cuidado para não abrir
+e destruir threads incessantemente a cada nível de recursão, em vez disso
+utilizamos as mesmas 9 em toda a vida do programa, usando semáforos para
+controlar seu trabalho.
+
+A estratégia ainda admite muitas melhorias, porém não foi possível
+implementá-las já que o prazo para submissão estava se esgotando. Em particular,
+é bem fácil adaptar para que todas as soluções possíveis sejam encontradas.
