@@ -15,7 +15,7 @@ void *resolve_sudoku(void *arg)
 {
   char ***tabuleiro = (char ***) arg, ***tmp;
 
-  int sum, i, j, k, branches = 1;
+  int i, j, k, branches;
   try_list *tries = NULL;
 
   /* grava apontador para o grid a ser resolvido */
@@ -27,6 +27,13 @@ void *resolve_sudoku(void *arg)
   sem_post(args.sem + 1);
   sem_wait(args.sem + 2);
 
+  if (args.flag & IMPOSSIBLE)
+    {
+      free(tries);
+      freetabuleiro(tabuleiro);
+      return NULL;
+    }
+
   /* para cada célula do grid */
 
   for (i = 0; i < GRID_SIZE; i++)
@@ -34,64 +41,41 @@ void *resolve_sudoku(void *arg)
       for (j = 0; j < GRID_SIZE; j++)
 	{
 	  /* conta possibilidades pra cada célula */
-	  sum = 0;
+	  branches = 0;
 	  for (k = 0; k < NUMBERS; k++)
-	    sum += tabuleiro[i][j][k];
-
-	  /* se não houver possibilidade, não há solução para o grid */
-	  if (!sum)
-	    {
-	      free(tries);
-	      freetabuleiro(tabuleiro);
-	      return NULL;
-	    }
+	    branches += tabuleiro[i][j][k];
 
 	  /* se há mais do que 1 (pega a maior no fim das contas), preparar
 	     para entrar no backtracking */
+	  if (!branches)
+	    fprintf (stderr, "WTF");
 
-	  if (sum > branches)
+	  if (branches > 1)
 	    {
-	      /* aloca memória pra guardar as possibilidades */
-	      branches = sum;
-	      tries = realloc(tries, sizeof(try_list) * branches);
-
-	      /* grava posição e possibilidades */
-	      for (k = 0; k < NUMBERS; k++)
+	      for (branches = 0; branches < NUMBERS; branches++)
 		{
-		  if (tabuleiro[i][j][k])
-		    {
-		      tries[--sum].i = i;
-		      tries[sum].j = j;
-		      tries[sum].possible = k;
-		    }
+		  if (!tabuleiro[i][j][branches])
+		    continue;
+		  /* copia trabalho */
+		  tmp = copiatabuleiro(tabuleiro);
+		  /* chuta um número possível */
+		  for (k = 0; k < NUMBERS; k++)
+		    if (branches != k)
+		      tmp[i][j][k] = 0;
+		  /* chama a recursão */
+		  tmp = resolve_sudoku(tmp);
+		  /* se achou solução, já sai */
+		  if (tmp)
+		    break;
 		}
+	      freetabuleiro(tabuleiro);
+	      return tmp;
 	    }
 	}
     }
 
   /* se não houve mais de uma possibilidade */
-  if (!tries)
-    return tabuleiro;
-
-
-  for (i = 0; i < branches; i++)
-    {
-      /* copia trabalho */
-      tmp = copiatabuleiro(tabuleiro);
-      /* chuta um número possível */
-      for (k = 0; k < NUMBERS; k++)
-	if (tries[i].possible != k)
-	  tmp[tries[i].i][tries[i].j][k] = 0;
-      /* chama a recursão */
-      tmp = resolve_sudoku(tmp);
-      /* se achou solução, já sai */
-      if (tmp)
-	break;
-    }
-  /* libera memória e retorna resultado */
-  freetabuleiro(tabuleiro);
-  free(tries);
-  return tmp;
+  return tabuleiro;
 }
 
 int main(void)

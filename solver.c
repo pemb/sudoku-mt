@@ -68,12 +68,10 @@ void *solver_loop(void *_args)
 	  sem_wait(args->sem + 1);
 	  sem_post(args->sem);
 	}
-
       pthread_mutex_unlock(&args->mutex);
 
       sem_wait(args->sem);
       sem_post(args->sem);
-
 
       flag = 0;
       for (h = 0; h < STRATEGIES; h++)
@@ -90,6 +88,13 @@ void *solver_loop(void *_args)
 		      sum++;
 		    }
 		}
+	      /* falhou */
+	      if (!sum)
+		{
+		  pthread_mutex_lock(&args->mutex);
+		  args->flag = IMPOSSIBLE;
+		  goto migue;
+		}
 	      if (sum != 1)
 		continue;
 	      /* se houver só uma, desmarca como possibilidade nos vizinhos e marca a flag de alteração */
@@ -97,23 +102,19 @@ void *solver_loop(void *_args)
 		{
 		  if (j == i)
 		    continue;
-		  flag = flag
-		      || *getpos[h] (args->tabuleiro, slice, j, match);
+		  flag = flag || *getpos[h] (args->tabuleiro, slice, j, match);
 		  *getpos[h] (args->tabuleiro, slice, j, match) = 0;
 		}
-
 	    }
 	}
 
-      /* if (!args->flag) */
-      /*        return NULL; */
-
       /* 2a barreira de sincronização */
       pthread_mutex_lock(&args->mutex);
-      args->flag = flag || args->flag;
+      args->flag = flag | args->flag;
+    migue:
       if (!--(args->count))
 	{
-	  if (!args->flag)
+	  if (args->flag & IMPOSSIBLE || !args->flag)
 	    {
 	      sem_post(args->sem + 2);
 	      sem_wait(args->sem + 1);
