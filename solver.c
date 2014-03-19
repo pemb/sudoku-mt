@@ -43,7 +43,7 @@ inline char *single_subgrid(char ***g, int slice, int index, int pos)
 }
 
 /* vetor de funções */
-inline char *(*getpos[STRATEGIES]) (char ***, int, int, int) =
+char *(*getpos[STRATEGIES]) (char ***, int, int, int) =
 {
 remove_row, remove_column, remove_subgrid, single_row, single_column,
       single_subgrid};
@@ -59,7 +59,7 @@ void *solver_loop(void *_args)
   slice = args->slice++;
   pthread_mutex_unlock(&args->mutex);
 
-  while (1)
+  do
     {
       /* 1a barreira de sincronização */
       pthread_mutex_lock(&args->mutex);
@@ -128,6 +128,7 @@ void *solver_loop(void *_args)
       sem_wait(args->sem + 1);
       sem_post(args->sem + 1);
     }
-
+  while (args->tabuleiro);
+  
   return NULL;
 }

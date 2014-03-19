@@ -98,8 +98,11 @@ int main(void)
   /* chama função que resolve */
   tabuleiro = resolve_sudoku(tabuleiro);
 
-  /* while (i--) */
-  /*   pthread_join(threads[i], NULL); */
+  args.tabuleiro = NULL;
+  sem_post(args.sem+1);
+
+  for (i = 0; i < GRID_SIZE; i++)
+    pthread_join(threads[i], NULL);
 
   /* destrói primitivas de sincronização */
   pthread_mutex_destroy(&args.mutex);
