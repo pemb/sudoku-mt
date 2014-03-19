@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <stdint.h>
 typedef struct TryList {
   int i, j, possible;
 } try_list;
@@ -11,10 +11,10 @@ typedef struct TryList {
 pthread_t threads[GRID_SIZE];
 Args args;
 
-void *resolve_sudoku(void *arg)
+uint64_t resolve_sudoku(void *arg)
 {
   char ***tabuleiro = (char ***) arg, ***tmp;
-
+  uint64_t count = 0;
   int i, j, k, branches;
   try_list *tries = NULL;
 
@@ -31,7 +31,8 @@ void *resolve_sudoku(void *arg)
     {
       free(tries);
       freetabuleiro(tabuleiro);
-      return NULL;
+      /* return NULL; */
+      return 0;
     }
 
   /* para cada célula do grid */
@@ -63,19 +64,19 @@ void *resolve_sudoku(void *arg)
 		    if (branches != k)
 		      tmp[i][j][k] = 0;
 		  /* chama a recursão */
-		  tmp = resolve_sudoku(tmp);
+		  count += resolve_sudoku(tmp);
 		  /* se achou solução, já sai */
-		  if (tmp)
-		    break;
+		  /* if (tmp) */
+		  /*   break; */
 		}
 	      freetabuleiro(tabuleiro);
-	      return tmp;
+	      return count;
 	    }
 	}
     }
-
+  freetabuleiro(tabuleiro);
   /* se não houve mais de uma possibilidade */
-  return tabuleiro;
+  return 1;
 }
 
 int main(void)
@@ -83,6 +84,7 @@ int main(void)
   int i;
   /* lê tabuleiro */
   char ***tabuleiro = letabuleiro();
+  uint64_t count;
 
   /* inicializa primitivas de sincronização */
   pthread_mutex_init(&args.mutex, NULL);
@@ -96,7 +98,7 @@ int main(void)
     pthread_create(threads + i, NULL, solver_loop, (void *) &args);
 
   /* chama função que resolve */
-  tabuleiro = resolve_sudoku(tabuleiro);
+  count = resolve_sudoku(tabuleiro);
 
   args.tabuleiro = NULL;
   sem_post(args.sem+1);
@@ -110,12 +112,14 @@ int main(void)
     sem_destroy(args.sem + i);
 
   /*imprime resultado */
-  if (!tabuleiro)
-    printf("no solution\n");
-  else
-    printtabuleiro(tabuleiro);
+  /* if (!tabuleiro) */
+  /*   printf("no solution\n"); */
+  /* else */
+  /*   printtabuleiro(tabuleiro); */
+  
+  printf ("%lu\n", count);
 
   /* libera memória */
-  freetabuleiro(tabuleiro);
+  /* freetabuleiro(tabuleiro); */
   return 0;
 }
