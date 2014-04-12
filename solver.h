@@ -11,8 +11,8 @@
 struct _Args {
   char ***tabuleiro;
   int flag, slice, count;
-  pthread_mutex_t mutex;
-  sem_t sem[3];
+  pthread_barrier_t barrier;
+  sem_t sem[2];
 };
 
 typedef struct _Args Args;

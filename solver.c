@@ -51,82 +51,73 @@ remove_row, remove_column, remove_subgrid, single_row, single_column,
 void *solver_loop(void *_args)
 {
   Args *args = (Args *) _args;
-  int h, i, j, flag, sum, match, slice;
+  int h, i, j, flag, sum, match, slice, flag_sum;
 
-  /* threads decidem em que fatia do grid vão rodar */
+  slice = __sync_fetch_and_add( &args->slice, 1);
 
-  pthread_mutex_lock(&args->mutex);
-  slice = args->slice++;
-  pthread_mutex_unlock(&args->mutex);
+  sem_wait(args->sem);
+  sem_post(args->sem);
 
   do
     {
-      /* 1a barreira de sincronização */
-      pthread_mutex_lock(&args->mutex);
-      if (++(args->count) == GRID_SIZE)
+      flag_sum = 0;
+      do
 	{
-	  sem_wait(args->sem + 1);
-	  sem_post(args->sem);
-	}
-      pthread_mutex_unlock(&args->mutex);
-
-      sem_wait(args->sem);
-      sem_post(args->sem);
-
-      flag = 0;
-      for (h = 0; h < STRATEGIES; h++)
-	{
-	  for (i = 0; i < GRID_SIZE; i++)
+	  flag = 0;
+	  for (h = 0; h < STRATEGIES; h++)
 	    {
-	      sum = 0;
-	      /* conta ocorrências */
-	      for (j = 0; j < GRID_SIZE; j++)
+	      for (i = 0; i < GRID_SIZE; i++)
 		{
-		  if (*getpos[h] (args->tabuleiro, slice, i, j))
+		  sum = 0;
+		  /* conta ocorrências */
+		  for (j = 0; j < GRID_SIZE; j++)
 		    {
-		      match = j;
-		      sum++;
+		      if (*getpos[h] (args->tabuleiro, slice, i, j))
+			{
+			  match = j;
+			  sum++;
+			}
+		    }
+		  /* falhou */
+		  if (!sum)
+		    {
+		      flag_sum = IMPOSSIBLE;
+		      goto migue;
+		    }
+		  if (sum != 1)
+		    continue;
+		  /* se houver só uma, desmarca como possibilidade nos vizinhos e marca a flag de alteração */
+		  for (j = 0; j < NUMBERS; j++)
+		    {
+		      if (j == i)
+			continue;
+		      flag += *getpos[h] (args->tabuleiro, slice, j, match);
+		      *getpos[h] (args->tabuleiro, slice, j, match) = 0;
 		    }
 		}
-	      /* falhou */
-	      if (!sum)
-		{
-		  pthread_mutex_lock(&args->mutex);
-		  args->flag = IMPOSSIBLE;
-		  goto migue;
-		}
-	      if (sum != 1)
-		continue;
-	      /* se houver só uma, desmarca como possibilidade nos vizinhos e marca a flag de alteração */
-	      for (j = 0; j < NUMBERS; j++)
-		{
-		  if (j == i)
-		    continue;
-		  flag = flag || *getpos[h] (args->tabuleiro, slice, j, match);
-		  *getpos[h] (args->tabuleiro, slice, j, match) = 0;
-		}
 	    }
+	  flag_sum = flag_sum || sum;
 	}
+      while (flag);
 
-      /* 2a barreira de sincronização */
-      pthread_mutex_lock(&args->mutex);
-      args->flag = flag | args->flag;
     migue:
-      if (!--(args->count))
-	{
-	  if (args->flag & IMPOSSIBLE || !args->flag)
-	    {
-	      sem_post(args->sem + 2);
-	      sem_wait(args->sem + 1);
-	    }
-	  args->flag = 0;
-	  sem_wait(args->sem);
-	  sem_post(args->sem + 1);
-	}
-      pthread_mutex_unlock(&args->mutex);
+      __sync_fetch_and_or (&args->flag, flag_sum);
+      
+      if (!slice)
+	sem_wait(args->sem);
 
-      sem_wait(args->sem + 1);
-      sem_post(args->sem + 1);
+      pthread_barrier_wait(&args->barrier);
+      
+	if (!slice)
+	  {
+	    if (!args->flag || (args->flag & IMPOSSIBLE))
+	      sem_post(args->sem+1);
+	    else
+	      sem_post(args->sem);
+	  }
+      
+      sem_wait(args->sem);
+      sem_post(args->sem);
     }
   while (args->tabuleiro);
   

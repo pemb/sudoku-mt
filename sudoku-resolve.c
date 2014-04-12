@@ -24,8 +24,8 @@ void *resolve_sudoku(void *arg)
 
   /* libera threads para trabalharem e espera fim da eliminação */
 
-  sem_post(args.sem + 1);
-  sem_wait(args.sem + 2);
+  sem_post(args.sem );
+  sem_wait(args.sem + 1);
 
   if (args.flag & IMPOSSIBLE)
     {
@@ -52,7 +52,8 @@ void *resolve_sudoku(void *arg)
 
 	  if (branches > 1)
 	    {
-	      for (branches = 0; branches < NUMBERS; branches++)
+	      tmp = NULL;
+	      for (branches = 0; !tmp && branches < NUMBERS; branches++)
 		{
 		  if (!tabuleiro[i][j][branches])
 		    continue;
@@ -64,9 +65,6 @@ void *resolve_sudoku(void *arg)
 		      tmp[i][j][k] = 0;
 		  /* chama a recursão */
 		  tmp = resolve_sudoku(tmp);
-		  /* se achou solução, já sai */
-		  if (tmp)
-		    break;
 		}
 	      freetabuleiro(tabuleiro);
 	      return tmp;
@@ -85,8 +83,8 @@ int main(void)
   char ***tabuleiro = letabuleiro();
 
   /* inicializa primitivas de sincronização */
-  pthread_mutex_init(&args.mutex, NULL);
-  for (i = 0; i < 3; i++)
+  pthread_barrier_init(&args.barrier, NULL, GRID_SIZE);
+  for (i = 0; i < 1; i++)
     sem_init(args.sem + i, 0, 0);
 
   args.flag = args.count = args.slice = 0;
@@ -99,13 +97,13 @@ int main(void)
   tabuleiro = resolve_sudoku(tabuleiro);
 
   args.tabuleiro = NULL;
-  sem_post(args.sem+1);
+  sem_post(args.sem);
 
   for (i = 0; i < GRID_SIZE; i++)
     pthread_join(threads[i], NULL);
 
   /* destrói primitivas de sincronização */
-  pthread_mutex_destroy(&args.mutex);
+  pthread_barrier_destroy(&args.barrier);
   for (i = 0; i < 2; i++)
     sem_destroy(args.sem + i);
 
